@@ -1,0 +1,273 @@
+{
+  "name": "docnav",
+  "displayName": "DocNav",
+  "description": "Панель навигации по документации на основе YAML-оглавления",
+  "version": "0.0.1",
+  "publisher": "docnav",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/docs-with-deepseek/doc-nav-panel.git"
+  },
+  "homepage": "https://github.com/docs-with-deepseek/doc-nav-panel#readme",
+  "bugs": {
+    "url": "https://github.com/docs-with-deepseek/doc-nav-panel/issues"
+  },
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:docnav.tocTree",
+    "onView:docnavDoppel.tocTree"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "docnav-sidebar",
+          "title": "DocNav",
+          "icon": "media/icon.svg"
+        },
+        {
+          "id": "docnav-doppel-sidebar",
+          "title": "DocNavDoppel",
+          "icon": "media/icon-doppel.svg"
+        }
+      ]
+    },
+    "views": {
+      "docnav-sidebar": [
+        {
+          "type": "webview",
+          "id": "docnav.inputPanel",
+          "name": "Настройки"
+        },
+        {
+          "id": "docnav.tocTree",
+          "name": "Оглавление"
+        }
+      ],
+      "docnav-doppel-sidebar": [
+        {
+          "type": "webview",
+          "id": "docnavDoppel.inputPanel",
+          "name": "Настройки"
+        },
+        {
+          "id": "docnavDoppel.tocTree",
+          "name": "Оглавление"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "docnav.openFile",
+        "title": "Открыть файл"
+      },
+      {
+        "command": "docnav.refreshTree",
+        "title": "Обновить",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "docnav.expandAll",
+        "title": "Развернуть всё",
+        "icon": "$(expand-all)"
+      },
+      {
+        "command": "docnav.copyRelativePath",
+        "title": "Копировать относительный путь"
+      },
+      {
+        "command": "docnav.copyAbsolutePath",
+        "title": "Копировать абсолютный путь"
+      },
+      {
+        "command": "docnav.annotateTocLevels",
+        "title": "Аннотировать уровни заголовков",
+        "icon": "$(symbol-number)"
+      },
+      {
+        "command": "docnav.syncTocNumbers",
+        "title": "Синхронизировать номера разделов",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "docnav.openTocFile",
+        "title": "Перейти к файлу оглавления",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "docnavDoppel.openFile",
+        "title": "Открыть файл"
+      },
+      {
+        "command": "docnavDoppel.refreshTree",
+        "title": "Обновить",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "docnavDoppel.expandAll",
+        "title": "Развернуть всё",
+        "icon": "$(expand-all)"
+      },
+      {
+        "command": "docnavDoppel.copyRelativePath",
+        "title": "Копировать относительный путь"
+      },
+      {
+        "command": "docnavDoppel.copyAbsolutePath",
+        "title": "Копировать абсолютный путь"
+      },
+      {
+        "command": "docnavDoppel.annotateTocLevels",
+        "title": "Аннотировать уровни заголовков",
+        "icon": "$(symbol-number)"
+      },
+      {
+        "command": "docnavDoppel.syncTocNumbers",
+        "title": "Синхронизировать номера разделов",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "docnavDoppel.openTocFile",
+        "title": "Перейти к файлу оглавления",
+        "icon": "$(go-to-file)"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "DocNav",
+        "properties": {
+          "docnav.tocFilePath": {
+            "type": "string",
+            "default": "",
+            "description": "Имя YAML-файла оглавления (например, _contents.yaml)"
+          },
+          "docnav.rootPath": {
+            "type": "string",
+            "default": "",
+            "description": "Директория-источник .md-файлов (относительно корня workspace)"
+          }
+        }
+      },
+      {
+        "title": "DocNavDoppel",
+        "properties": {
+          "docnavDoppel.tocFilePath": {
+            "type": "string",
+            "default": "",
+            "description": "Имя YAML-файла оглавления (например, _contents.yaml)"
+          },
+          "docnavDoppel.rootPath": {
+            "type": "string",
+            "default": "",
+            "description": "Директория-источник .md-файлов (относительно корня workspace)"
+          }
+        }
+      }
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "docnav.copyRelativePath",
+          "when": "view == docnav.tocTree && viewItem == file",
+          "group": "navigation@1"
+        },
+        {
+          "command": "docnav.copyAbsolutePath",
+          "when": "view == docnav.tocTree && viewItem == file",
+          "group": "navigation@2"
+        },
+        {
+          "command": "docnavDoppel.copyRelativePath",
+          "when": "view == docnavDoppel.tocTree && viewItem == file",
+          "group": "navigation@1"
+        },
+        {
+          "command": "docnavDoppel.copyAbsolutePath",
+          "when": "view == docnavDoppel.tocTree && viewItem == file",
+          "group": "navigation@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "docnav.refreshTree",
+          "when": "view == docnav.tocTree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "docnav.annotateTocLevels",
+          "when": "view == docnav.tocTree",
+          "group": "navigation@2"
+        },
+        {
+          "command": "docnav.syncTocNumbers",
+          "when": "view == docnav.tocTree",
+          "group": "navigation@3"
+        },
+        {
+          "command": "docnav.expandAll",
+          "when": "view == docnav.tocTree",
+          "group": "navigation@4"
+        },
+        {
+          "command": "docnav.openTocFile",
+          "when": "view == docnav.tocTree",
+          "group": "navigation@5"
+        },
+        {
+          "command": "docnavDoppel.refreshTree",
+          "when": "view == docnavDoppel.tocTree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "docnavDoppel.annotateTocLevels",
+          "when": "view == docnavDoppel.tocTree",
+          "group": "navigation@2"
+        },
+        {
+          "command": "docnavDoppel.syncTocNumbers",
+          "when": "view == docnavDoppel.tocTree",
+          "group": "navigation@3"
+        },
+        {
+          "command": "docnavDoppel.expandAll",
+          "when": "view == docnavDoppel.tocTree",
+          "group": "navigation@4"
+        },
+        {
+          "command": "docnavDoppel.openTocFile",
+          "when": "view == docnavDoppel.tocTree",
+          "group": "navigation@5"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "node esbuild.config.js",
+    "compile": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.24.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.1.0"
+  }
+}
