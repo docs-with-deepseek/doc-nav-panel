@@ -1,0 +1,13 @@
+.vscode/**
+.vscode-test/**
+src/**
+node_modules/**
+.gitignore
+tsconfig.json
+esbuild.config.js
+docs/**
+*.vsix
+kilo.json
+build/**
+build.ps1
+build.cmd

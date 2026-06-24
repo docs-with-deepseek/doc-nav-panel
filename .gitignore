@@ -1,0 +1,18 @@
+# Build output
+build/
+
+# Compiled output
+out/
+
+# Dependencies
+node_modules/
+
+# VS Code settings (personal)
+.vscode/
+
+# VSIX packages
+*.vsix
+
+# Environment
+.env
+.env.*
