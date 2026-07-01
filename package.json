@@ -2,7 +2,7 @@
   "name": "docnav",
   "displayName": "DocNav",
   "description": "Панель навигации по документации на основе YAML-оглавления",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "docnav",
   "license": "MIT",
   "repository": {
@@ -26,7 +26,9 @@
   ],
   "activationEvents": [
     "onView:docnav.tocTree",
-    "onView:docnavDoppel.tocTree"
+    "onView:docnavDoppel.tocTree",
+    "onView:docnav.secondaryTree",
+    "onView:docnavDoppel.secondaryTree"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -39,6 +41,18 @@
         },
         {
           "id": "docnav-doppel-sidebar",
+          "title": "DocNavDoppel",
+          "icon": "media/icon-doppel.svg"
+        }
+      ],
+      "secondarySidebar": [
+        {
+          "id": "docnav-secondary-sidebar",
+          "title": "DocNav",
+          "icon": "media/icon.svg"
+        },
+        {
+          "id": "docnav-doppel-secondary-sidebar",
           "title": "DocNavDoppel",
           "icon": "media/icon-doppel.svg"
         }
@@ -64,6 +78,18 @@
         },
         {
           "id": "docnavDoppel.tocTree",
+          "name": "Оглавление"
+        }
+      ],
+      "docnav-secondary-sidebar": [
+        {
+          "id": "docnav.secondaryTree",
+          "name": "Оглавление"
+        }
+      ],
+      "docnav-doppel-secondary-sidebar": [
+        {
+          "id": "docnavDoppel.secondaryTree",
           "name": "Оглавление"
         }
       ]

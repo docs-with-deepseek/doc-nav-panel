@@ -13,11 +13,13 @@ export class InputWebviewProvider implements vscode.WebviewViewProvider {
   private onTocFileChange?: (value: string) => void;
   private onRootDirChange?: (value: string) => void;
   private onApply?: () => void;
+  private onOpenSecondary?: () => void;
 
   constructor(
     private getTocFilePath: () => string,
     private getRootPath: () => string,
-    private panelTitle: string = 'DocNav'
+    private panelTitle: string = 'DocNav',
+    private secondaryButtonLabel: string = 'Правая панель'
   ) {}
 
   /** Установить callback на изменение YAML-файла */
@@ -33,6 +35,11 @@ export class InputWebviewProvider implements vscode.WebviewViewProvider {
   /** Установить callback на применение (Enter) */
   setOnApply(cb: () => void): void {
     this.onApply = cb;
+  }
+
+  /** Установить callback на открытие правой панели */
+  setOnOpenSecondary(cb: () => void): void {
+    this.onOpenSecondary = cb;
   }
 
   /** Обновить значения полей из настроек */
@@ -68,6 +75,9 @@ export class InputWebviewProvider implements vscode.WebviewViewProvider {
           break;
         case 'apply':
           this.onApply?.();
+          break;
+        case 'openSecondary':
+          this.onOpenSecondary?.();
           break;
         case 'ready':
           // Webview готов — отправляем текущие значения
@@ -155,10 +165,46 @@ export class InputWebviewProvider implements vscode.WebviewViewProvider {
       color: var(--vscode-descriptionForeground, #999);
       margin-top: 2px;
     }
+
+    .sidebar-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+      padding: 5px 8px;
+      margin-bottom: 8px;
+      background: var(--vscode-button-background, #007acc);
+      color: var(--vscode-button-foreground, #fff);
+      border: none;
+      border-radius: 2px;
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar-btn:hover {
+      background: var(--vscode-button-hoverBackground, #005fa3);
+    }
+
+    .sidebar-btn:active {
+      opacity: 0.8;
+    }
+
+    .sidebar-btn-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
   </style>
 </head>
 <body>
   <div class="panel-heading">${this.escapeHtml(this.panelTitle)}</div>
+  <button id="openSecondaryBtn" class="sidebar-btn">
+    <span class="sidebar-btn-icon">☰</span>
+    <span>${this.escapeHtml(this.secondaryButtonLabel)}</span>
+  </button>
   <div class="field-group">
     <label for="tocFile">Файл оглавления</label>
     <input
@@ -185,6 +231,12 @@ export class InputWebviewProvider implements vscode.WebviewViewProvider {
     const vscode = acquireVsCodeApi();
     const tocFileEl = document.getElementById('tocFile');
     const rootPathEl = document.getElementById('rootPath');
+    const openSecondaryBtn = document.getElementById('openSecondaryBtn');
+
+    // Открытие правой панели
+    openSecondaryBtn.addEventListener('click', () => {
+      vscode.postMessage({ type: 'openSecondary' });
+    });
 
     // Отправка при изменении
     let tocDebounce;

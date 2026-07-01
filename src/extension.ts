@@ -13,12 +13,14 @@ interface PanelConfig {
   viewContainerId: string;
   webviewViewId: string;
   treeViewId: string;
+  secondaryContainerId?: string;
 }
 
 class PanelController {
   private treeProvider: DocTreeDataProvider;
   private inputProvider: InputWebviewProvider;
   private treeView!: vscode.TreeView<vscode.TreeItem>;
+  private secondaryTreeView?: vscode.TreeView<vscode.TreeItem>;
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -29,7 +31,8 @@ class PanelController {
     this.inputProvider = new InputWebviewProvider(
       () => this.getTocFilePath(),
       () => this.getRootPath(),
-      cfg.displayName
+      cfg.displayName,
+      cfg.ns === 'docnavDoppel' ? 'Правая панель Doppel' : 'Правая панель'
     );
 
     this.registerAll();
@@ -309,6 +312,15 @@ class PanelController {
       showCollapseAll: true,
     });
 
+    // Secondary sidebar tree view (правая панель, как Copilot)
+    if (this.cfg.secondaryContainerId) {
+      this.secondaryTreeView = vscode.window.createTreeView(this.cfg.ns + '.secondaryTree', {
+        treeDataProvider: this.treeProvider,
+        showCollapseAll: true,
+      });
+      subscriptions.push(this.secondaryTreeView);
+    }
+
     // WebviewView
     subscriptions.push(
       vscode.window.registerWebviewViewProvider(webviewViewId, this.inputProvider, {
@@ -328,6 +340,13 @@ class PanelController {
     this.inputProvider.setOnApply(async () => {
       await this.rebuildTree();
     });
+
+    // Кнопка открытия правой панели
+    if (this.cfg.secondaryContainerId) {
+      this.inputProvider.setOnOpenSecondary(() => {
+        vscode.commands.executeCommand('workbench.view.extension.' + this.cfg.secondaryContainerId);
+      });
+    }
 
     // --- Commands ---
 
@@ -486,6 +505,7 @@ export function activate(context: vscode.ExtensionContext) {
     viewContainerId: 'docnav-sidebar',
     webviewViewId: 'docnav.inputPanel',
     treeViewId: 'docnav.tocTree',
+    secondaryContainerId: 'docnav-secondary-sidebar',
   });
 
   new PanelController(context, {
@@ -494,6 +514,7 @@ export function activate(context: vscode.ExtensionContext) {
     viewContainerId: 'docnav-doppel-sidebar',
     webviewViewId: 'docnavDoppel.inputPanel',
     treeViewId: 'docnavDoppel.tocTree',
+    secondaryContainerId: 'docnav-doppel-secondary-sidebar',
   });
 }
 
