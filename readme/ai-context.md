@@ -163,6 +163,8 @@ input-files:
 | `readTitle()` | Извлекает `title` из frontmatter `.md`-файла |
 | `readFirstHeadingLevel()` | Считает `#` первого заголовка после frontmatter (включая HTML-комментарии) |
 | `readTocTreeLvlFromFrontmatter()` | Читает поле `toc-tree-lvl` из frontmatter (приоритетный источник) |
+| `writeTocTreeLvlToFrontmatter()` | Записывает `toc-tree-lvl` в frontmatter, создаёт frontmatter при отсутствии |
+| `readOrder()` | Читает `order` из frontmatter для сортировки записей в `_contents.yaml` |
 | `readAllTitles()` | Массовое чтение title для списка файлов |
 
 ### Алгоритм определения toc-tree-lvl (в `annotateTocLevelsInFile`)
@@ -203,6 +205,8 @@ Webview с двумя полями ввода:
 | `docnav.annotateTocLevels` | Прописать `(toc-tree-lvl=N)` в комментарии YAML |
 | `docnav.syncTocNumbers` | Синхронизировать номера разделов с toc-tree-lvl |
 | `docnav.openTocFile` | Открыть YAML-файл оглавления |
+| `docnav.stampTocTreeLevels` | Проставить `toc-tree-lvl` во frontmatter всех `.md`-файлов в корневой директории |
+| `docnav.rebuildTocFile` | Пересоздать `_contents.yaml` — обход `.md`-файлов в `rootPath`, сортировка по `order` из frontmatter |
 | `docnav.copyRelativePath` | Копировать относительный путь |
 | `docnav.copyAbsolutePath` | Копировать абсолютный путь |
 
@@ -326,3 +330,5 @@ Remote: `origin → git@github.com:docs-with-deepseek/doc-nav-panel.git`
 | 2026-06-24 | Скрипты сборки `build.ps1`/`build.cmd` в корне |
 | 2026-06-24 | Упрощена логика аннотирования YAML: убран `splice`, оставлен `replace` |
 | 2026-06-24 | Откат чекбокса DocNavDoppel — нестабильно, возврат к двум всегда видимым панелям |
+| 2026-07-16 | Команда `stampTocTreeLevels` — обход `.md`-файлов в `rootPath`, запись `toc-tree-lvl` во frontmatter по глубине вложенности; для `_index.md` уровень уменьшается на 1, если < 1 — файл пропускается |
+| 2026-07-25 | Команда `rebuildTocFile` — обход `.md`-файлов в `rootPath`, сортировка по `order` из frontmatter, перезапись `_contents.yaml` в формате `input-files:` с пустыми комментариями `#` между записями; добавлен `readOrder()` в frontmatterReader |

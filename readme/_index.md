@@ -1,2 +1,3 @@
 
-code --install-extension docnav-0.0.1.vsix
+npm run package
+code --install-extension docnav-0.0.2.vsix

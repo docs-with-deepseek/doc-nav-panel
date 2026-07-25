@@ -2,7 +2,7 @@
   "name": "docnav",
   "displayName": "DocNav",
   "description": "Панель навигации по документации на основе YAML-оглавления",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "docnav",
   "license": "MIT",
   "repository": {
@@ -133,6 +133,16 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "docnav.stampTocTreeLevels",
+        "title": "Проставить toc-tree-lvl в .md файлах",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "docnav.rebuildTocFile",
+        "title": "Обновить _contents.yaml",
+        "icon": "$(new-file)"
+      },
+      {
         "command": "docnavDoppel.openFile",
         "title": "Открыть файл"
       },
@@ -168,6 +178,16 @@
         "command": "docnavDoppel.openTocFile",
         "title": "Перейти к файлу оглавления",
         "icon": "$(go-to-file)"
+      },
+      {
+        "command": "docnavDoppel.stampTocTreeLevels",
+        "title": "Проставить toc-tree-lvl в .md файлах",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "docnavDoppel.rebuildTocFile",
+        "title": "Обновить _contents.yaml",
+        "icon": "$(new-file)"
       }
     ],
     "configuration": [
@@ -252,6 +272,16 @@
           "group": "navigation@5"
         },
         {
+          "command": "docnav.stampTocTreeLevels",
+          "when": "view == docnav.tocTree",
+          "group": "navigation@6"
+        },
+        {
+          "command": "docnav.rebuildTocFile",
+          "when": "view == docnav.tocTree",
+          "group": "navigation@7"
+        },
+        {
           "command": "docnavDoppel.refreshTree",
           "when": "view == docnavDoppel.tocTree",
           "group": "navigation@1"
@@ -275,6 +305,16 @@
           "command": "docnavDoppel.openTocFile",
           "when": "view == docnavDoppel.tocTree",
           "group": "navigation@5"
+        },
+        {
+          "command": "docnavDoppel.stampTocTreeLevels",
+          "when": "view == docnavDoppel.tocTree",
+          "group": "navigation@6"
+        },
+        {
+          "command": "docnavDoppel.rebuildTocFile",
+          "when": "view == docnavDoppel.tocTree",
+          "group": "navigation@7"
         }
       ]
     }

@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { DocTreeDataProvider } from './treeDataProvider';
 import { InputWebviewProvider } from './inputWebview';
-import { readTitle, readFirstHeadingLevel, readAllTitles, readTocTreeLvlFromFrontmatter } from './frontmatterReader';
+import { readTitle, readFirstHeadingLevel, readAllTitles, readTocTreeLvlFromFrontmatter, writeTocTreeLvlToFrontmatter, readOrder } from './frontmatterReader';
 import { DocTreeItem, TocNode } from './types';
 import { parseTocFile, extractFilePaths } from './tocParser';
 
@@ -302,6 +302,103 @@ class PanelController {
     return { processed, errors };
   }
 
+  private collectMdFiles(rootDir: string, currentDir: string, result: string[]): void {
+    try {
+      const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(currentDir, entry.name);
+        if (entry.isDirectory()) {
+          this.collectMdFiles(rootDir, fullPath, result);
+        } else if (entry.isFile() && entry.name.endsWith('.md')) {
+          result.push(fullPath);
+        }
+      }
+    } catch {
+      // пропускаем недоступные директории
+    }
+  }
+
+  private stampTocTreeLevelsInDir(rootDir: string): { processed: number; unchanged: number; skipped: number; errors: number } {
+    let processed = 0;
+    let unchanged = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    const mdFiles: string[] = [];
+    this.collectMdFiles(rootDir, rootDir, mdFiles);
+
+    for (const fullPath of mdFiles) {
+      try {
+        const relPath = path.relative(rootDir, fullPath);
+        const dirPart = path.dirname(relPath);
+        const dirCount = dirPart === '.' ? 0 : dirPart.split(path.sep).length;
+        let tocTrLvl = dirCount + 1;
+
+        const baseName = path.basename(fullPath);
+        if (baseName === '_index.md') {
+          tocTrLvl -= 1;
+        }
+
+        if (tocTrLvl < 1) {
+          skipped++;
+          continue;
+        }
+
+        const result = writeTocTreeLvlToFrontmatter(fullPath, tocTrLvl);
+        if (result === 'written') {
+          processed++;
+        } else if (result === 'unchanged') {
+          unchanged++;
+        } else {
+          errors++;
+        }
+      } catch {
+        errors++;
+      }
+    }
+
+    return { processed, unchanged, skipped, errors };
+  }
+
+  private rebuildTocFile(tocFilePath: string, rootDir: string): { total: number; errors: number } {
+    const mdFiles: string[] = [];
+    this.collectMdFiles(rootDir, rootDir, mdFiles);
+
+    interface FileEntry {
+      relPath: string;
+      order: number | null;
+    }
+
+    const entries: FileEntry[] = [];
+    let errors = 0;
+
+    for (const fullPath of mdFiles) {
+      try {
+        const relPath = path.relative(rootDir, fullPath);
+        const order = readOrder(fullPath);
+        entries.push({ relPath, order });
+      } catch {
+        errors++;
+      }
+    }
+
+    entries.sort((a, b) => {
+      if (a.order !== null && b.order !== null) return a.order - b.order;
+      if (a.order !== null) return -1;
+      if (b.order !== null) return 1;
+      return a.relPath.localeCompare(b.relPath);
+    });
+
+    let yaml = 'input-files:\n\n';
+    for (const entry of entries) {
+      yaml += '  # \n';
+      yaml += `  - ${entry.relPath}\n`;
+    }
+
+    fs.writeFileSync(tocFilePath, yaml, 'utf-8');
+    return { total: entries.length, errors };
+  }
+
   private registerAll(): void {
     const { ns, treeViewId, webviewViewId } = this.cfg;
     const { subscriptions } = this.context;
@@ -421,6 +518,62 @@ class PanelController {
         } catch (error) {
           vscode.window.showErrorMessage(
             this.msg(`ошибка синхронизации: ${error instanceof Error ? error.message : String(error)}`)
+          );
+        }
+      })
+    );
+
+    subscriptions.push(
+      vscode.commands.registerCommand(`${ns}.stampTocTreeLevels`, async () => {
+        const rootDir = this.getResolvedRootPath();
+
+        if (!rootDir) {
+          vscode.window.showErrorMessage(this.msg('укажите корневую директорию'));
+          return;
+        }
+
+        if (!fs.existsSync(rootDir)) {
+          vscode.window.showErrorMessage(this.msg(`корневая директория не найдена: ${rootDir}`));
+          return;
+        }
+
+        try {
+          const result = this.stampTocTreeLevelsInDir(rootDir);
+          vscode.window.showInformationMessage(
+            this.msg(`проставлено: ${result.processed}, без изменений: ${result.unchanged}, пропущено (_index.md): ${result.skipped}, ошибок: ${result.errors}`)
+          );
+        } catch (error) {
+          vscode.window.showErrorMessage(
+            this.msg(`ошибка: ${error instanceof Error ? error.message : String(error)}`)
+          );
+        }
+      })
+    );
+
+    subscriptions.push(
+      vscode.commands.registerCommand(`${ns}.rebuildTocFile`, async () => {
+        const tocFullPath = this.resolveTocFullPath();
+        const rootDir = this.getResolvedRootPath();
+
+        if (!tocFullPath || !rootDir) {
+          vscode.window.showErrorMessage(this.msg('укажите YAML-файл оглавления и корневую директорию'));
+          return;
+        }
+
+        if (!fs.existsSync(rootDir)) {
+          vscode.window.showErrorMessage(this.msg(`корневая директория не найдена: ${rootDir}`));
+          return;
+        }
+
+        try {
+          const result = this.rebuildTocFile(tocFullPath, rootDir);
+          vscode.window.showInformationMessage(
+            this.msg(`файл оглавления пересоздан: ${result.total} файлов, ошибок: ${result.errors}`)
+          );
+          await this.rebuildTree();
+        } catch (error) {
+          vscode.window.showErrorMessage(
+            this.msg(`ошибка: ${error instanceof Error ? error.message : String(error)}`)
           );
         }
       })

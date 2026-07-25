@@ -149,6 +149,99 @@ export function readTocTreeLvlFromFrontmatter(filePath: string): number | null {
 }
 
 /**
+ * Записывает toc-tree-lvl в frontmatter .md-файла.
+ * Если frontmatter отсутствует — создаёт его.
+ * Если поле уже есть — обновляет значение.
+ * @returns 'written' — запись выполнена, 'unchanged' — файл уже содержит нужное значение, null — ошибка
+ */
+export function writeTocTreeLvlToFrontmatter(filePath: string, level: number): 'written' | 'unchanged' | null {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+
+    if (lines[0].trim() === '---') {
+      let fmEndIdx = -1;
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim() === '---') {
+          fmEndIdx = i;
+          break;
+        }
+      }
+
+      if (fmEndIdx !== -1) {
+        let found = false;
+        for (let i = 1; i < fmEndIdx; i++) {
+          const colonIdx = lines[i].indexOf(':');
+          if (colonIdx !== -1) {
+            const key = lines[i].substring(0, colonIdx).trim();
+            if (key === 'toc-tree-lvl') {
+              const currentValue = lines[i].substring(colonIdx + 1).trim();
+              if (currentValue === String(level)) {
+                return 'unchanged';
+              }
+              lines[i] = `toc-tree-lvl: ${level}`;
+              found = true;
+              break;
+            }
+          }
+        }
+
+        if (!found) {
+          lines.splice(fmEndIdx, 0, `toc-tree-lvl: ${level}`);
+        }
+      }
+    } else {
+      lines.unshift('---', `toc-tree-lvl: ${level}`, '---', '');
+    }
+
+    const newContent = lines.join('\n');
+    if (newContent === content) return 'unchanged';
+
+    fs.writeFileSync(filePath, newContent, 'utf-8');
+    return 'written';
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Читает order из frontmatter .md-файла.
+ * @returns число order или null, если поле не задано
+ */
+export function readOrder(filePath: string): number | null {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+
+    if (lines[0].trim() !== '---') return null;
+
+    for (let i = 1; i < lines.length; i++) {
+      const trimmed = lines[i].trim();
+      if (trimmed === '---') break;
+
+      const colonIdx = trimmed.indexOf(':');
+      if (colonIdx === -1) continue;
+
+      const key = trimmed.substring(0, colonIdx).trim();
+      if (key === 'order') {
+        const value = trimmed.substring(colonIdx + 1).trim();
+        const num = parseInt(value, 10);
+        if (!isNaN(num)) return num;
+        return null;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Массовое чтение title для списка файлов.
  * @returns Map относительный_путь → title
  */
