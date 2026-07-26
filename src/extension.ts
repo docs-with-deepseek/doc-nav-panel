@@ -361,42 +361,87 @@ class PanelController {
   }
 
   private rebuildTocFile(tocFilePath: string, rootDir: string): { total: number; errors: number } {
-    const mdFiles: string[] = [];
-    this.collectMdFiles(rootDir, rootDir, mdFiles);
+    let total = 0;
+    let errors = 0;
+    const yamlLines: string[] = [];
 
-    interface FileEntry {
+    function emitEntry(relPath: string, depth: number): void {
+      const commentIndent = '  '.repeat(depth);
+      const fileIndent = '  '.repeat(depth - 1);
+      yamlLines.push(commentIndent + '# ');
+      yamlLines.push('  - ' + fileIndent + relPath);
+    }
+
+    function readOrderSafe(filePath: string): number | null {
+      try {
+        return readOrder(filePath);
+      } catch {
+        return null;
+      }
+    }
+
+    interface DirEntry {
+      tag: 'page' | 'section';
       relPath: string;
       order: number | null;
     }
 
-    const entries: FileEntry[] = [];
-    let errors = 0;
-
-    for (const fullPath of mdFiles) {
+    function processLevel(dirPath: string, depth: number): void {
+      let dirents: fs.Dirent[];
       try {
-        const relPath = path.relative(rootDir, fullPath);
-        const order = readOrder(fullPath);
-        entries.push({ relPath, order });
+        dirents = fs.readdirSync(dirPath, { withFileTypes: true });
       } catch {
         errors++;
+        return;
+      }
+
+      const entries: DirEntry[] = [];
+
+      for (const d of dirents) {
+        if (d.isFile() && d.name.endsWith('.md') && !(d.name === '_index.md' && depth > 1)) {
+          const fullPath = path.join(dirPath, d.name);
+          const relPath = path.relative(rootDir, fullPath);
+          const order = readOrderSafe(fullPath);
+          entries.push({ tag: 'page', relPath, order });
+        } else if (d.isDirectory()) {
+          const indexPath = path.join(dirPath, d.name, '_index.md');
+          if (fs.existsSync(indexPath)) {
+            const order = readOrderSafe(indexPath);
+            entries.push({ tag: 'section', relPath: d.name, order });
+          } else {
+            // Subdirectory without _index.md — inline its files at current depth
+            processLevel(path.join(dirPath, d.name), depth);
+          }
+        }
+      }
+
+      entries.sort((a, b) => {
+        if (a.order !== null && b.order !== null) {
+          if (a.order !== b.order) return a.order - b.order;
+          return a.relPath.localeCompare(b.relPath);
+        }
+        if (a.order !== null) return -1;
+        if (b.order !== null) return 1;
+        return a.relPath.localeCompare(b.relPath);
+      });
+
+      for (const entry of entries) {
+        if (entry.tag === 'page') {
+          emitEntry(entry.relPath, depth);
+          total++;
+        } else {
+          emitEntry(path.join(entry.relPath, '_index.md'), depth);
+          total++;
+          processLevel(path.join(dirPath, entry.relPath), depth + 1);
+        }
       }
     }
 
-    entries.sort((a, b) => {
-      if (a.order !== null && b.order !== null) return a.order - b.order;
-      if (a.order !== null) return -1;
-      if (b.order !== null) return 1;
-      return a.relPath.localeCompare(b.relPath);
-    });
+    processLevel(rootDir, 1);
 
-    let yaml = 'input-files:\n\n';
-    for (const entry of entries) {
-      yaml += '  # \n';
-      yaml += `  - ${entry.relPath}\n`;
-    }
-
+    const yaml = 'input-files:\n\n' + yamlLines.join('\n') + '\n';
     fs.writeFileSync(tocFilePath, yaml, 'utf-8');
-    return { total: entries.length, errors };
+    return { total, errors };
   }
 
   private registerAll(): void {

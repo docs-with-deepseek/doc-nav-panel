@@ -2,7 +2,7 @@
   "name": "docnav",
   "displayName": "DocNav",
   "description": "Панель навигации по документации на основе YAML-оглавления",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "docnav",
   "license": "MIT",
   "repository": {
