@@ -365,11 +365,15 @@ class PanelController {
     let errors = 0;
     const yamlLines: string[] = [];
 
+    function toPosix(p: string): string {
+      return p.split(path.sep).join('/');
+    }
+
     function emitEntry(relPath: string, depth: number): void {
       const commentIndent = '  '.repeat(depth);
       const fileIndent = '  '.repeat(depth - 1);
       yamlLines.push(commentIndent + '# ');
-      yamlLines.push('  - ' + fileIndent + relPath);
+      yamlLines.push('  - ' + fileIndent + toPosix(relPath));
     }
 
     function readOrderSafe(filePath: string): number | null {
@@ -407,7 +411,7 @@ class PanelController {
           const indexPath = path.join(dirPath, d.name, '_index.md');
           if (fs.existsSync(indexPath)) {
             const order = readOrderSafe(indexPath);
-            entries.push({ tag: 'section', relPath: d.name, order });
+            entries.push({ tag: 'section', relPath: path.relative(rootDir, indexPath), order });
           } else {
             // Subdirectory without _index.md — inline its files at current depth
             processLevel(path.join(dirPath, d.name), depth);
@@ -430,9 +434,10 @@ class PanelController {
           emitEntry(entry.relPath, depth);
           total++;
         } else {
-          emitEntry(path.join(entry.relPath, '_index.md'), depth);
+          emitEntry(entry.relPath, depth);
           total++;
-          processLevel(path.join(dirPath, entry.relPath), depth + 1);
+          const sectionDir = path.join(rootDir, path.dirname(entry.relPath));
+          processLevel(sectionDir, depth + 1);
         }
       }
     }
